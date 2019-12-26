@@ -14,31 +14,31 @@
 
 
 /*
-   UDP syntax:
-   signals:
+    UDP syntax:
+    signals:
      DS18B20 1wire sensor packet:    rail1 1w 2864fc3008082 25.44
      DS2438 1wire sensor packet:     rail1 1w 2612c3102004f 25.44 1.23 0.12
      digital input state:            rail1 di1 1
      analog input state:             rail1 ai1 250
-   commands:
+    commands:
      relay on command:               rail1 do12 on
      relay off command:              rail1 do5 off
-     high side switch on command:    rail1 ho2 on    
+     high side switch on command:    rail1 ho2 on
      high side switch off command:   rail1 ho4 off
-     low side switch on command:     rail1 lo1 on    
+     low side switch on command:     rail1 lo1 on
      low side switch off command:    rail1 lo2 off
      analog output command:          rail1 ao1 180
      status command:                 rail1 stat10
      reset command:                  rail1 rst
-   default scan cycles:
+    default scan cycles:
      1wire cycle:                    30000 ms
      analog input cycle:             10000 ms
      heart beat cycle(only RS485):   60000 ms
 
-   MODBUS TCP commands: FC1 - FC16
-   MODBUS RTU commands: FC3, FC6, FC16
-   
-   MODBUS register map (1 register = 2 bytes = 16 bits)
+    MODBUS TCP commands: FC1 - FC16
+    MODBUS RTU commands: FC3, FC6, FC16
+
+    MODBUS register map (1 register = 2 bytes = 16 bits)
           register number            description
           0                          relay outputs 1-8
           1                          relay outputs 9-12
@@ -55,13 +55,13 @@
           12                         1st DS2438 Vad (value multiplied by 100)
           13                         1st DS2438 Vsens (value multiplied by 100)
           -
-          39                         DS2438 values (up to 10 sensors) 
+          39                         DS2438 values (up to 10 sensors)
           40-50                      DS18B20 Temperature (up to 10 sensors) (value multiplied by 100)
-   
-   Combination of 1wire sensors must be up to 10pcs maximum (DS18B20 or DS2438)
-   
-   using RS485 the UDP syntax must have \n symbol at the end of the command line
-     
+
+    Combination of 1wire sensors must be up to 10pcs maximum (DS18B20 or DS2438)
+
+    using RS485 the UDP syntax must have \n symbol at the end of the command line
+
 */
 
 //#define dbg(x) Serial.print(x);
@@ -170,12 +170,12 @@ String digStatCommand[numOfDigInputs];
 String anaOutCommand[numOfAnaOuts];
 
 class Timer {
-  private:
-    unsigned long timestampLastHitMs;
-    unsigned long sleepTimeMs;
-  public:
-    boolean isOver();
-    void sleep(unsigned long sleepTimeMs);
+    private:
+        unsigned long timestampLastHitMs;
+        unsigned long sleepTimeMs;
+    public:
+        boolean isOver();
+        void sleep(unsigned long sleepTimeMs);
 };
 
 boolean Timer::isOver() {
@@ -214,19 +214,19 @@ DS2438 ds2438(&ds);
 
 void setup() {
 
-    Serial.begin(9600);  
-    
+    Serial.begin(9600);
+
 
     dbg("Railduino firmware version: ");
     dbgln(ver);
-    
+
     for (int i = 0; i < numOfDigInputs; i++) {
         pinMode(inputPins[i], INPUT);
         inputStatus[i] = 1;
         inputStatusNew[i] = 0;
         digStatCommand[i] = digStatStr + String(i + 1, DEC);
     }
-    
+
     for (int i = 0; i < numOfRelays; i++) {
         pinMode(relayPins[i], OUTPUT);
         relayOnCommands[i] = relayStr + String(i + 1, DEC) + " on";
@@ -247,7 +247,7 @@ void setup() {
         LSSwitchOffCommands[i] = LSSwitchStr + String(i + 1, DEC) + " off";
         setLSSwitch(i, 0);
     }
-   
+
     for (int i = 0; i < numOfAnaOuts; i++) {
         pinMode(anaOutPins[i], OUTPUT);
         anaOutCommand[i] = anaOutStr + String(i + 1, DEC);
@@ -266,52 +266,66 @@ void setup() {
     statusLedTimerOn.sleep(statusLedTimeOn);
     statusLedTimerOff.sleep(statusLedTimeOff);
     heartBeatTimer.sleep(heartBeatCycle);
- 
+
     for (int i = 0; i < 4; i++) {
         pinMode(dipSwitchPins[i], INPUT);
-        if (!digitalRead(dipSwitchPins[i])) { boardAddress |= (1 << i); }
+        if (!digitalRead(dipSwitchPins[i])) {
+            boardAddress |= (1 << i);
+        }
     }
 
     pinMode(dipSwitchPins[4], INPUT);
-    if (!digitalRead(dipSwitchPins[4]))  { ethOn = 1; dbgln("Ethernet ON");} else { ethOn = 0; dbgln("Ethernet OFF");}
+    if (!digitalRead(dipSwitchPins[4]))  {
+        ethOn = 1;
+        dbgln("Ethernet ON");
+    } else {
+        ethOn = 0;
+        dbgln("Ethernet OFF");
+    }
 
-    pinMode(dipSwitchPins[5], INPUT); 
-    if (!digitalRead(dipSwitchPins[5]))  { rtuOn = 1; dbgln("485 RTU ON ");} else { rtuOn = 0; dbgln("485 RTU OFF");}
-    
+    pinMode(dipSwitchPins[5], INPUT);
+    if (!digitalRead(dipSwitchPins[5]))  {
+        rtuOn = 1;
+        dbgln("485 RTU ON ");
+    } else {
+        rtuOn = 0;
+        dbgln("485 RTU OFF");
+    }
+
     dbg(baudRate);
     dbg(" Bd, Tx Delay: ");
     dbg(serial3TxDelay);
     dbg(" ms, Timeout: ");
     dbg(serial3TimeOut);
     dbgln(" ms");
-            
-    boardAddressStr = String(boardAddress);  
+
+    boardAddressStr = String(boardAddress);
     boardAddressRailStr = railStr + String(boardAddress);
 
     if (ethOn) {
-      mac[5] = (0xED + boardAddress);
-      listenIpAddress = IPAddress(192, 168, 150, 150 + boardAddress);
-      if (Ethernet.begin(mac) == 0)
-      {
-        dbgln("Failed to configure Ethernet using DHCP, using Static Mode");
-        Ethernet.begin(mac, listenIpAddress);
-      }
-         
-      udpRecv.begin(listenPort);
-      udpSend.begin(sendPort);
+        mac[5] = (0xED + boardAddress);
+        listenIpAddress = IPAddress(192, 168, 150, 150 + boardAddress);
+        if (Ethernet.begin(mac) == 0)
+        {
+            dbgln("Failed to configure Ethernet using DHCP, using Static Mode");
+            Ethernet.begin(mac, listenIpAddress);
+        }
 
-      dbg("IP: ");
-      printIPAddress();
-      dbgln();
+        udpRecv.begin(listenPort);
+        udpSend.begin(sendPort);
+
+        dbg("IP: ");
+        printIPAddress();
+        dbgln();
     }
 
 
     memset(Mb.MbData, 0, sizeof(Mb.MbData));
 
     if (rtuOn) {
-      modbus_configure(&Serial3, baudRate, SERIAL_8N1, boardAddress, serial3TxControl, sizeof(Mb.MbData), Mb.MbData); 
+        modbus_configure(&Serial3, baudRate, SERIAL_8N1, boardAddress, serial3TxControl, sizeof(Mb.MbData), Mb.MbData);
     }
-    
+
     Serial3.begin(baudRate);
     Serial3.setTimeout(serial3TimeOut);
     pinMode(serial3TxControl, OUTPUT);
@@ -319,62 +333,70 @@ void setup() {
 
     dbg("Address: ");
     dbgln(boardAddressStr);
-    
-    lookUpSensors(); 
+
+    lookUpSensors();
 
 }
 
 void loop() {
-     
+
     readDigInputs();
 
     readAnaInputs();
 
     processCommands();
-    
+
     processOnewire();
 
     statusLed();
-    
-    if (ethOn) {Mb.MbsRun();} else {heartBeat();}
 
-    if (rtuOn) {modbus_update();}   
- 
+    if (ethOn) {
+        Mb.MbsRun();
+    } else {
+        heartBeat();
+    }
+
+    if (rtuOn) {
+        modbus_update();
+    }
+
 }
 
-void (* resetFunc) (void) = 0; 
+void (* resetFunc) (void) = 0;
 
 
 void printIPAddress()
 {
-  for (byte thisByte = 0; thisByte < 4; thisByte++) {
-    dbg(Ethernet.localIP()[thisByte]);
-    dbg(".");
-  }
+    for (byte thisByte = 0; thisByte < 4; thisByte++) {
+        dbg(Ethernet.localIP()[thisByte]);
+        dbg(".");
+    }
 }
 
 void heartBeat() {
-    if (!heartBeatTimer.isOver()) { 
-      return;
-    }  
-    
+    if (!heartBeatTimer.isOver()) {
+        return;
+    }
+
     heartBeatTimer.sleep(heartBeatCycle);
     if (ticTac) {
-      sendMsg(heartBeatStr + " 1");
-      ticTac = 0;
+        sendMsg(heartBeatStr + " 1");
+        ticTac = 0;
     } else {
-      sendMsg(heartBeatStr + " 0");
-      ticTac = 1;
-    }   
+        sendMsg(heartBeatStr + " 0");
+        ticTac = 1;
+    }
 }
 
 void statusLed() {
-    if (statusLedTimerOff.isOver()) { 
-       statusLedTimerOn.sleep(statusLedTimeOn);
-       statusLedTimerOff.sleep(statusLedTimeOff);
-       digitalWrite(ledPins[0],HIGH);  
-    }  
-    if (statusLedTimerOn.isOver()) { digitalWrite(ledPins[0],LOW); } 
+    if (statusLedTimerOff.isOver()) {
+        statusLedTimerOn.sleep(statusLedTimeOn);
+        statusLedTimerOff.sleep(statusLedTimeOff);
+        digitalWrite(ledPins[0], HIGH);
+    }
+    if (statusLedTimerOn.isOver()) {
+        digitalWrite(ledPins[0], LOW);
+    }
 }
 
 String oneWireAddressToString(byte addr[]) {
@@ -385,172 +407,182 @@ String oneWireAddressToString(byte addr[]) {
     return s;
 }
 
-void lookUpSensors(){
-  byte j=0, k=0, l=0, m=0;
-  while ((j <= maxSensors) && (ds.search(sensors[j]))){
-     if (!OneWire::crc8(sensors[j], 7) != sensors[j][7]){
-        if (sensors[j][0] == 38){
-           for (l=0;l<8;l++){ sensors2438[k][l]=sensors[j][l]; }  
-           k++;  
-        } else {
-           for (l=0;l<8;l++){ sensors18B20[m][l]=sensors[j][l]; }
-           m++;
-           dssetresolution(ds,sensors[j],resolution);
+void lookUpSensors() {
+    byte j = 0, k = 0, l = 0, m = 0;
+    while ((j <= maxSensors) && (ds.search(sensors[j]))) {
+        if (!OneWire::crc8(sensors[j], 7) != sensors[j][7]) {
+            if (sensors[j][0] == 38) {
+                for (l = 0; l < 8; l++) {
+                    sensors2438[k][l] = sensors[j][l];
+                }
+                k++;
+            } else {
+                for (l = 0; l < 8; l++) {
+                    sensors18B20[m][l] = sensors[j][l];
+                }
+                m++;
+                dssetresolution(ds, sensors[j], resolution);
+            }
         }
-     }
-     j++;
-  }
-  DS2438count = k;
-  DS18B20count = m;
-  dbg("1-wire sensors found: ");
-  dbgln(k+m);
+        j++;
+    }
+    DS2438count = k;
+    DS18B20count = m;
+    dbg("1-wire sensors found: ");
+    dbgln(k + m);
 }
 
 void dssetresolution(OneWire ow, byte addr[8], byte resolution) {
-  byte resbyte = 0x1F;
-  if (resolution == 12){ resbyte = 0x7F; }
-  else if (resolution == 11) { resbyte = 0x5F; }
-  else if (resolution == 10) { resbyte = 0x3F; }
+    byte resbyte = 0x1F;
+    if (resolution == 12) {
+        resbyte = 0x7F;
+    }
+    else if (resolution == 11) {
+        resbyte = 0x5F;
+    }
+    else if (resolution == 10) {
+        resbyte = 0x3F;
+    }
 
-  ow.reset();
-  ow.select(addr);
-  ow.write(0x4E);         
-  ow.write(0);            
-  ow.write(0);            
-  ow.write(resbyte);      
-  ow.write(0x48);         
+    ow.reset();
+    ow.select(addr);
+    ow.write(0x4E);
+    ow.write(0);
+    ow.write(0);
+    ow.write(resbyte);
+    ow.write(0x48);
 }
 
-void dsconvertcommand(OneWire ow, byte addr[8]){
-  ow.reset();
-  ow.select(addr);
-  ow.write(0x44,1);       
+void dsconvertcommand(OneWire ow, byte addr[8]) {
+    ow.reset();
+    ow.select(addr);
+    ow.write(0x44, 1);
 }
 
 float dsreadtemp(OneWire ow, byte addr[8]) {
-  int i;
-  byte data[12];
-  float celsius;
-  ow.reset();
-  ow.select(addr);
-  ow.write(0xBE);         
-  for ( i = 0; i < 9; i++) { 
-    data[i] = ow.read();
-  }
+    int i;
+    byte data[12];
+    float celsius;
+    ow.reset();
+    ow.select(addr);
+    ow.write(0xBE);
+    for ( i = 0; i < 9; i++) {
+        data[i] = ow.read();
+    }
 
-  int16_t TReading = (data[1] << 8) | data[0];  
-  celsius = 0.0625 * TReading;
-  return celsius;
+    int16_t TReading = (data[1] << 8) | data[0];
+    celsius = 0.0625 * TReading;
+    return celsius;
 }
 
 
 void processOnewire() {
-   static byte oneWireState = 0;
-   static byte oneWireCnt = 0;
-   
-   switch(oneWireState)
-   {
-   case 0:
-      if (!oneWireTimer.isOver()) {
-         return;  
-      }
-      oneWireTimer.sleep(oneWireCycle);   
-      oneWireSubTimer.sleep(oneWireSubCycle);   
-      oneWireCnt = 0;
-      oneWireState++;
-      break;
-   case 1:
-      if (!oneWireSubTimer.isOver()) {
-        return;
-      }
-      if ((oneWireCnt < DS2438count)){          
-         ds2438.begin();
-         ds2438.update(sensors2438[oneWireCnt]);
-         if (!ds2438.isError()) {
-            if (rtuOn) {
-              Mb.MbData[oneWireTempByte + (oneWireCnt*3)] = ds2438.getTemperature()*100; 
-              Mb.MbData[oneWireVadByte + (oneWireCnt*3)] = ds2438.getVoltage(DS2438_CHA)*100; 
-              Mb.MbData[oneWireVsensByte + (oneWireCnt*3)] = ds2438.getVoltage(DS2438_CHB)*100; 
-            } else {
-              sendMsg("1w " + oneWireAddressToString(sensors2438[oneWireCnt]) + " " + String(ds2438.getTemperature(), 2) + " " + String(ds2438.getVoltage(DS2438_CHA), 2) + " " + String(ds2438.getVoltage(DS2438_CHB), 2));
+    static byte oneWireState = 0;
+    static byte oneWireCnt = 0;
+
+    switch (oneWireState)
+    {
+        case 0:
+            if (!oneWireTimer.isOver()) {
+                return;
             }
-         }
-         oneWireCnt++;
-      } else {
-        oneWireCnt = 0;
-        oneWireState++;
-      }
-      break;
-   case 2:
-      if (!oneWireSubTimer.isOver()) {
-         return;
-      }
-      if ((oneWireCnt < DS18B20count)){  
-         dsconvertcommand(ds,sensors18B20[oneWireCnt]);            
-         oneWireCnt++;
-      } else {
-        oneWireCnt = 0;
-        oneWireState++;
-      }
-      break;
-   case 3:
-      if (!oneWireSubTimer.isOver()) {
-         return;
-      }
-      if ((oneWireCnt < DS18B20count)){  
-         if (rtuOn) {
-           Mb.MbData[oneWireDS18B20Byte + oneWireCnt] = dsreadtemp(ds,sensors18B20[oneWireCnt])*100; 
-         } else {
-           sendMsg("1w " + oneWireAddressToString(sensors18B20[oneWireCnt]) + " " + String(dsreadtemp(ds,sensors18B20[oneWireCnt]), 2));
-         }
-         oneWireCnt++;
-      } else {
-        oneWireState = 0;
-      }
-      break;
-   }
+            oneWireTimer.sleep(oneWireCycle);
+            oneWireSubTimer.sleep(oneWireSubCycle);
+            oneWireCnt = 0;
+            oneWireState++;
+            break;
+        case 1:
+            if (!oneWireSubTimer.isOver()) {
+                return;
+            }
+            if ((oneWireCnt < DS2438count)) {
+                ds2438.begin();
+                ds2438.update(sensors2438[oneWireCnt]);
+                if (!ds2438.isError()) {
+                    if (rtuOn) {
+                        Mb.MbData[oneWireTempByte + (oneWireCnt * 3)] = ds2438.getTemperature() * 100;
+                        Mb.MbData[oneWireVadByte + (oneWireCnt * 3)] = ds2438.getVoltage(DS2438_CHA) * 100;
+                        Mb.MbData[oneWireVsensByte + (oneWireCnt * 3)] = ds2438.getVoltage(DS2438_CHB) * 100;
+                    } else {
+                        sendMsg("1w " + oneWireAddressToString(sensors2438[oneWireCnt]) + " " + String(ds2438.getTemperature(), 2) + " " + String(ds2438.getVoltage(DS2438_CHA), 2) + " " + String(ds2438.getVoltage(DS2438_CHB), 2));
+                    }
+                }
+                oneWireCnt++;
+            } else {
+                oneWireCnt = 0;
+                oneWireState++;
+            }
+            break;
+        case 2:
+            if (!oneWireSubTimer.isOver()) {
+                return;
+            }
+            if ((oneWireCnt < DS18B20count)) {
+                dsconvertcommand(ds, sensors18B20[oneWireCnt]);
+                oneWireCnt++;
+            } else {
+                oneWireCnt = 0;
+                oneWireState++;
+            }
+            break;
+        case 3:
+            if (!oneWireSubTimer.isOver()) {
+                return;
+            }
+            if ((oneWireCnt < DS18B20count)) {
+                if (rtuOn) {
+                    Mb.MbData[oneWireDS18B20Byte + oneWireCnt] = dsreadtemp(ds, sensors18B20[oneWireCnt]) * 100;
+                } else {
+                    sendMsg("1w " + oneWireAddressToString(sensors18B20[oneWireCnt]) + " " + String(dsreadtemp(ds, sensors18B20[oneWireCnt]), 2));
+                }
+                oneWireCnt++;
+            } else {
+                oneWireState = 0;
+            }
+            break;
+    }
 }
 
 
 void readDigInputs() {
 
     int timestamp = millis();
-    for (int i = 0; i < numOfDigInputs; i++) {      
-       int oldValue = inputStatus[i];
-       int newValue = inputStatusNew[i];
-       int curValue = digitalRead(inputPins[i]);
-       int byteNo = i/8;
-       int bitPos = i - (byteNo*8);
-       
-       if (oldValue != newValue) {
-          if(newValue != curValue) {
-             inputStatusNew[i] = curValue;
-          } else if(timestamp - inputChangeTimestamp[i] > debouncingTime) {
-             inputStatus[i] = newValue;
-             if(!newValue) {
-                bitWrite(Mb.MbData[byteNo+5], bitPos, 1);
-                sendInputOn(i + 1);
-             } else {
-                bitWrite(Mb.MbData[byteNo+5], bitPos, 0);         
-                sendInputOff(i + 1);  
-             }
-          }
-       
-       } else {
-          if(oldValue != curValue) {
-             inputStatusNew[i] = curValue;
-             inputChangeTimestamp[i] = timestamp;
-          }
-       }
+    for (int i = 0; i < numOfDigInputs; i++) {
+        int oldValue = inputStatus[i];
+        int newValue = inputStatusNew[i];
+        int curValue = digitalRead(inputPins[i]);
+        int byteNo = i / 8;
+        int bitPos = i - (byteNo * 8);
+
+        if (oldValue != newValue) {
+            if (newValue != curValue) {
+                inputStatusNew[i] = curValue;
+            } else if (timestamp - inputChangeTimestamp[i] > debouncingTime) {
+                inputStatus[i] = newValue;
+                if (!newValue) {
+                    bitWrite(Mb.MbData[byteNo + 5], bitPos, 1);
+                    sendInputOn(i + 1);
+                } else {
+                    bitWrite(Mb.MbData[byteNo + 5], bitPos, 0);
+                    sendInputOff(i + 1);
+                }
+            }
+
+        } else {
+            if (oldValue != curValue) {
+                inputStatusNew[i] = curValue;
+                inputChangeTimestamp[i] = timestamp;
+            }
+        }
     }
 }
 
 void readAnaInputs() {
-    
+
     if (!analogTimer.isOver()) {
-      return;
+        return;
     }
-    
+
     analogTimer.sleep(anaInputCycle);
     for (int i = 0; i < numOfAnaInputs; i++) {
         int pin = analogPins[i];
@@ -558,10 +590,10 @@ void readAnaInputs() {
         float oldValue = analogStatus[i];
         analogStatus[i] = value;
         if (value != oldValue) {
-            Mb.MbData[i+8] = (byte) value;
-            sendAnaInput(i+1,Mb.MbData[i+8]);
+            Mb.MbData[i + 8] = (byte) value;
+            sendAnaInput(i + 1, Mb.MbData[i + 8]);
         }
-    } 
+    }
 }
 
 void sendInputOn(int input) {
@@ -579,24 +611,24 @@ void sendAnaInput(int input, float value) {
 void sendMsg(String message) {
     message = railStr + boardAddressStr + " " + message;
     message.toCharArray(outputPacketBuffer, outputPacketBufferSize);
-   
-    digitalWrite(ledPins[1],HIGH);
-    
+
+    digitalWrite(ledPins[1], HIGH);
+
     if (ethOn) {
-      udpSend.beginPacket(sendIpAddress, remPort);
-      udpSend.write(outputPacketBuffer, message.length());
-      udpSend.endPacket();
+        udpSend.beginPacket(sendIpAddress, remPort);
+        udpSend.write(outputPacketBuffer, message.length());
+        udpSend.endPacket();
     }
 
     if (!rtuOn) {
-    digitalWrite(serial3TxControl, HIGH);     
-    Serial3.print(message + "\n");
-    delay(serial3TxDelay);    
-    digitalWrite(serial3TxControl, LOW);
+        digitalWrite(serial3TxControl, HIGH);
+        Serial3.print(message + "\n");
+        delay(serial3TxDelay);
+        digitalWrite(serial3TxControl, LOW);
     }
-     
-    digitalWrite(ledPins[1],LOW);
-    
+
+    digitalWrite(ledPins[1], LOW);
+
     dbg("Sending packet: ");
     dbgln(message);
 }
@@ -605,7 +637,7 @@ void setRelay(int relay, int value) {
     if (relay > numOfRelays) {
         return;
     }
-    dbgln("Writing to relay " + String(relay+1) + " value " + String(value));
+    dbgln("Writing to relay " + String(relay + 1) + " value " + String(value));
     digitalWrite(relayPins[relay], value);
 }
 
@@ -613,7 +645,7 @@ void setHSSwitch(int hsswitch, int value) {
     if (hsswitch > numOfHSSwitches) {
         return;
     }
-    dbgln("Writing to high side switch" + String(hsswitch+1) + " value " + String(value));
+    dbgln("Writing to high side switch" + String(hsswitch + 1) + " value " + String(value));
     digitalWrite(HSSwitchPins[hsswitch], value);
 }
 
@@ -621,7 +653,7 @@ void setLSSwitch(int lsswitch, int value) {
     if (lsswitch > numOfLSSwitches) {
         return;
     }
-    dbgln("Writing to low side switch" + String(lsswitch+1) + " value " + String(value));
+    dbgln("Writing to low side switch" + String(lsswitch + 1) + " value " + String(value));
     digitalWrite(LSSwitchPins[lsswitch], value);
 }
 
@@ -629,37 +661,37 @@ void setAnaOut(int pwm, int value) {
     if (pwm > numOfAnaOuts) {
         return;
     }
-    dbgln("Writing to analog output " + String(pwm+1) + " value " + String(value));
+    dbgln("Writing to analog output " + String(pwm + 1) + " value " + String(value));
     analogWrite(anaOutPins[pwm], value);
 }
 
 boolean receivePacket(String *cmd) {
 
     if (!rtuOn) {
-      while (Serial3.available() > 0) {    
-        *cmd = Serial3.readStringUntil('\n'); 
-        if (cmd->startsWith(boardAddressRailStr)) {
-          cmd->replace(boardAddressRailStr, "");
-          cmd->trim();
-          return true;
-        }   
-      }   
-    }
-    
-    if (ethOn) {
-      int packetSize = udpRecv.parsePacket();
-      if (packetSize) {
-        memset(inputPacketBuffer, 0, sizeof(inputPacketBuffer));
-        udpRecv.read(inputPacketBuffer, inputPacketBufferSize);
-        *cmd = String(inputPacketBuffer);
-        if (cmd->startsWith(boardAddressRailStr)) {
-            cmd->replace(boardAddressRailStr, "");
-            cmd->trim();
-            return true;
+        while (Serial3.available() > 0) {
+            *cmd = Serial3.readStringUntil('\n');
+            if (cmd->startsWith(boardAddressRailStr)) {
+                cmd->replace(boardAddressRailStr, "");
+                cmd->trim();
+                return true;
+            }
         }
-      }
     }
-   
+
+    if (ethOn) {
+        int packetSize = udpRecv.parsePacket();
+        if (packetSize) {
+            memset(inputPacketBuffer, 0, sizeof(inputPacketBuffer));
+            udpRecv.read(inputPacketBuffer, inputPacketBufferSize);
+            *cmd = String(inputPacketBuffer);
+            if (cmd->startsWith(boardAddressRailStr)) {
+                cmd->replace(boardAddressRailStr, "");
+                cmd->trim();
+                return true;
+            }
+        }
+    }
+
     return false;
 }
 
@@ -668,71 +700,77 @@ void processCommands() {
     String cmd;
     byte byteNo, curBitValue, bitPos;
     int curAnaVal;
-     
+
     for (int i = 0; i < numOfRelays; i++) {
-       if (i<8) {
-         setRelay(i, bitRead(Mb.MbData[relOut1Byte],i));
-       } else {
-         setRelay(i, bitRead(Mb.MbData[relOut2Byte],i-8));
-       }
-       
+        if (i < 8) {
+            setRelay(i, bitRead(Mb.MbData[relOut1Byte], i));
+        } else {
+            setRelay(i, bitRead(Mb.MbData[relOut2Byte], i - 8));
+        }
+
     }
-    
+
     for (int i = 0; i < numOfHSSwitches; i++) {
-       setHSSwitch(i, bitRead(Mb.MbData[hssLssByte],i));
+        setHSSwitch(i, bitRead(Mb.MbData[hssLssByte], i));
     }
 
     for (int i = 0; i < numOfLSSwitches; i++) {
-       setLSSwitch(i, bitRead(Mb.MbData[hssLssByte],i+numOfHSSwitches));
+        setLSSwitch(i, bitRead(Mb.MbData[hssLssByte], i + numOfHSSwitches));
     }
 
     for (int i = 0; i < numOfAnaOuts; i++) {
-       setAnaOut(i, Mb.MbData[anaOut1Byte+i]);
+        setAnaOut(i, Mb.MbData[anaOut1Byte + i]);
     }
 
-    if (bitRead(Mb.MbData[serviceByte],0)) {
+    if (bitRead(Mb.MbData[serviceByte], 0)) {
         resetFunc();
     }
-  
+
     if (receivePacket(&cmd)) {
         dbg("Received packet: ")
         dbgln(cmd);
-        digitalWrite(ledPins[1],HIGH);
+        digitalWrite(ledPins[1], HIGH);
         if (cmd.startsWith(relayStr)) {
             for (int i = 0; i < numOfRelays; i++) {
-                if (i<8) {byteNo = relOut1Byte; bitPos = i;} else {byteNo = relOut2Byte; bitPos = i-8;}
+                if (i < 8) {
+                    byteNo = relOut1Byte;
+                    bitPos = i;
+                } else {
+                    byteNo = relOut2Byte;
+                    bitPos = i - 8;
+                }
                 if (cmd == relayOnCommands[i]) {
-                    bitWrite(Mb.MbData[byteNo],bitPos,1);
+                    bitWrite(Mb.MbData[byteNo], bitPos, 1);
                 } else if (cmd == relayOffCommands[i]) {
-                    bitWrite(Mb.MbData[byteNo],bitPos,0);
+                    bitWrite(Mb.MbData[byteNo], bitPos, 0);
                 }
             }
         } else if (cmd.startsWith(HSSwitchStr)) {
             for (int i = 0; i < numOfHSSwitches; i++) {
                 if (cmd == HSSwitchOnCommands[i]) {
-                    bitWrite(Mb.MbData[hssLssByte],i,1);
+                    bitWrite(Mb.MbData[hssLssByte], i, 1);
                 } else if (cmd == HSSwitchOffCommands[i]) {
-                    bitWrite(Mb.MbData[hssLssByte],i,0);
+                    bitWrite(Mb.MbData[hssLssByte], i, 0);
                 }
             }
         } else if (cmd.startsWith(LSSwitchStr)) {
             for (int i = 0; i < numOfLSSwitches; i++) {
                 if (cmd == LSSwitchOnCommands[i]) {
-                    bitWrite(Mb.MbData[hssLssByte],i + numOfHSSwitches,1);
+                    bitWrite(Mb.MbData[hssLssByte], i + numOfHSSwitches, 1);
                 } else if (cmd == LSSwitchOffCommands[i]) {
-                    bitWrite(Mb.MbData[hssLssByte],i + numOfHSSwitches,0);
+                    bitWrite(Mb.MbData[hssLssByte], i + numOfHSSwitches, 0);
                 }
             }
         } else if (cmd.startsWith(anaOutStr)) {
             String anaOutValue = cmd.substring(anaOutStr.length() + 2);
             for (int i = 0; i < numOfAnaOuts; i++) {
-                if (cmd.substring(0,anaOutStr.length()+1) == anaOutCommand[i]) {
-                    Mb.MbData[anaOut1Byte+i] = anaOutValue.toInt();
-                } 
+                if (cmd.substring(0, anaOutStr.length() + 1) == anaOutCommand[i]) {
+                    Mb.MbData[anaOut1Byte + i] = anaOutValue.toInt();
+                }
             }
         } else if (cmd.startsWith(rstStr)) {
-            bitWrite(Mb.MbData[serviceByte],0,1);
+            bitWrite(Mb.MbData[serviceByte], 0, 1);
         }
-        digitalWrite(ledPins[1],LOW);
-      }
- }
+        digitalWrite(ledPins[1], LOW);
+    }
+}
