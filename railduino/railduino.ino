@@ -17,7 +17,10 @@
 //#define dbgln(x) Serial.println(x);
 #define dbgln(x) ;
 
-#define ver 2.1
+// Define Railduino board version
+// RESERVED FOR FUTURE USE: #define BOARD_RAILDUINO_1_3
+//#define BOARD_RAILDUINO_2_0
+#define BOARD_RAILDUINO_2_1
 
 #include <SimpleModbusSlave.h>
 #include <OneWire.h>
@@ -32,6 +35,58 @@ unsigned int sendPort = 55554;
 unsigned int remPort = 55555;
 IPAddress listenIpAddress;
 IPAddress sendIpAddress(255, 255, 255, 255);
+
+typedef struct rs485_parameter {
+  long baudRate;
+  int txDelay;
+  int timeOut;
+  String modeStr;
+} rs485_parameter;
+
+rs485_parameter rs485Parameters[] = {
+  {115200, 10, 20, "RS485, 115200kbps, RTU OFF"},
+  {19200, 30, 500, "RS485, 19200kbps, RTU OFF"},
+  {9600, 30, 500, "RS485, 9600kbps, RTU OFF"},
+  {115200, 10, 20, "RS485, 115200kbps, RTU ON"},
+  {0, 0, 0}
+};
+
+#define RS485_MODE_MODBUS_RTU       0
+#define RS485_MODE_RAILDUINO_115200 1
+#define RS485_MODE_RAILDUINO_19200  2
+#define RS485_MODE_RAILDUINO_9600   3
+#define RS485_MODE_UNUSED           4
+
+#if defined(BOARD_RAILDUINO_1_3)
+
+# define BOARD_VERSION 1.3
+# define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
+# define RS485_MODE_1 RS485_MODE_UNUSED
+
+#elif defined(BOARD_RAILDUINO_2_0)
+
+# define BOARD_VERSION 2.0
+# define numOfLSSwitches 4
+int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 13};
+# define numOfLedPins 2
+int ledPins[numOfLedPins] = {18, 17};
+# define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
+# define RS485_MODE_1 RS485_MODE_RAILDUINO_19200
+
+#elif defined(BOARD_RAILDUINO_2_1)
+
+#define BOARD_VERSION 2.1
+# define numOfLSSwitches 4
+int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 18};
+# define numOfLedPins 2
+int ledPins[numOfLedPins] = {13, 17};
+# define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
+# define RS485_MODE_1 RS485_MODE_MODBUS_RTU
+
+#else
+# error "Boardtype undefined. You must define one of the BOARD_RAILDUINO_"
+#endif
+
 
 #define relOut1Byte 0
 #define relOut2Byte 1
@@ -71,8 +126,6 @@ EthernetUDP udpSend;
 int relayPins[numOfRelays] = {37, 35, 33, 31, 29, 27, 39, 41, 43, 45, 47, 49};
 #define numOfHSSwitches 4
 int HSSwitchPins[numOfHSSwitches] = {5, 6, 7, 8};
-#define numOfLSSwitches 4
-int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 18};
 #define numOfAnaOuts 2
 int anaOutPins[numOfAnaOuts] = {3, 2};
 #define numOfAnaInputs 2
@@ -85,14 +138,9 @@ int inputStatusNew[numOfDigInputs];
 int inputChangeTimestamp[numOfDigInputs];
 #define numOfDipSwitchPins 6
 int dipSwitchPins[numOfDipSwitchPins] = {57, 56, 55, 54, 58, 59};
-#define numOfLedPins 2
-int ledPins[numOfLedPins] = {13, 17};
 int boardAddress = 0;
 int ethOn = 0;
-int rtuOn = 0;
-long baudRate = 115200;
-int serial3TxDelay = 10;
-int serial3TimeOut = 20;
+int rs485Mode = -1;
 bool ticTac = 0;
 
 String boardAddressStr;
@@ -166,7 +214,7 @@ void setup() {
 
 
     dbg("Railduino firmware version: ");
-    dbgln(ver);
+    dbgln(BOARD_VERSION);
 
     for (int i = 0; i < numOfDigInputs; i++) {
         pinMode(inputPins[i], INPUT);
@@ -233,18 +281,17 @@ void setup() {
 
     pinMode(dipSwitchPins[5], INPUT);
     if (!digitalRead(dipSwitchPins[5]))  {
-        rtuOn = 1;
-        dbgln("485 RTU ON ");
+        rs485Mode = RS485_MODE_0;
     } else {
-        rtuOn = 0;
-        dbgln("485 RTU OFF");
+        rs485Mode = RS485_MODE_1;
     }
+    dbgln(rs485Parameters[rs485Mode].modeStr);
 
-    dbg(baudRate);
+    dbg(rs485Parameters[rs485Mode].baudRate);
     dbg(" Bd, Tx Delay: ");
-    dbg(serial3TxDelay);
+    dbg(rs485Parameters[rs485Mode].txDelay);
     dbg(" ms, Timeout: ");
-    dbg(serial3TimeOut);
+    dbg(rs485Parameters[rs485Mode].timeOut);
     dbgln(" ms");
 
     boardAddressStr = String(boardAddress);
@@ -270,12 +317,12 @@ void setup() {
 
     memset(Mb.MbData, 0, sizeof(Mb.MbData));
 
-    if (rtuOn) {
-        modbus_configure(&Serial3, baudRate, SERIAL_8N1, boardAddress, serial3TxControl, sizeof(Mb.MbData), Mb.MbData);
+    if (rs485Mode == RS485_MODE_MODBUS_RTU) {
+        modbus_configure(&Serial3, rs485Parameters[rs485Mode].baudRate, SERIAL_8N1, boardAddress, serial3TxControl, sizeof(Mb.MbData), Mb.MbData);
     }
 
-    Serial3.begin(baudRate);
-    Serial3.setTimeout(serial3TimeOut);
+    Serial3.begin(rs485Parameters[rs485Mode].baudRate);
+    Serial3.setTimeout(rs485Parameters[rs485Mode].timeOut);
     pinMode(serial3TxControl, OUTPUT);
     digitalWrite(serial3TxControl, 0);
 
@@ -304,7 +351,7 @@ void loop() {
         heartBeat();
     }
 
-    if (rtuOn) {
+    if (rs485Mode == RS485_MODE_MODBUS_RTU) {
         modbus_update();
     }
 
@@ -447,7 +494,7 @@ void processOnewire() {
                 ds2438.begin();
                 ds2438.update(sensors2438[oneWireCnt]);
                 if (!ds2438.isError()) {
-                    if (rtuOn) {
+                    if (rs485Mode == RS485_MODE_MODBUS_RTU) {
                         Mb.MbData[oneWireTempByte + (oneWireCnt * 3)] = ds2438.getTemperature() * 100;
                         Mb.MbData[oneWireVadByte + (oneWireCnt * 3)] = ds2438.getVoltage(DS2438_CHA) * 100;
                         Mb.MbData[oneWireVsensByte + (oneWireCnt * 3)] = ds2438.getVoltage(DS2438_CHB) * 100;
@@ -478,7 +525,7 @@ void processOnewire() {
                 return;
             }
             if ((oneWireCnt < DS18B20count)) {
-                if (rtuOn) {
+                if (rs485Mode == RS485_MODE_MODBUS_RTU) {
                     Mb.MbData[oneWireDS18B20Byte + oneWireCnt] = dsreadtemp(ds, sensors18B20[oneWireCnt]) * 100;
                 } else {
                     sendMsg("1w " + oneWireAddressToString(sensors18B20[oneWireCnt]) + " " + String(dsreadtemp(ds, sensors18B20[oneWireCnt]), 2));
@@ -568,10 +615,10 @@ void sendMsg(String message) {
         udpSend.endPacket();
     }
 
-    if (!rtuOn) {
+    if (rs485Mode != RS485_MODE_MODBUS_RTU) {
         digitalWrite(serial3TxControl, HIGH);
         Serial3.print(message + "\n");
-        delay(serial3TxDelay);
+        delay(rs485Parameters[rs485Mode].txDelay);
         digitalWrite(serial3TxControl, LOW);
     }
 
@@ -615,7 +662,7 @@ void setAnaOut(int pwm, int value) {
 
 boolean receivePacket(String *cmd) {
 
-    if (!rtuOn) {
+    if (rs485Mode != RS485_MODE_MODBUS_RTU) {
         while (Serial3.available() > 0) {
             *cmd = Serial3.readStringUntil('\n');
             if (cmd->startsWith(boardAddressRailStr)) {

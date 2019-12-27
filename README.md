@@ -1,6 +1,6 @@
-# Railduino v2.1 firmware
+# Railduino v2.x firmware
 
-New firmware for Railduino v2.1 based on official firmware from Pavel Sedláček
+New firmware for Railduino v2.0 and v2.1 based on official firmware from Pavel Sedláček
 
 # Compile
 
