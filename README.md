@@ -2,6 +2,30 @@
 
 New firmware for Railduino v2.1 based on official firmware from Pavel Sedláček
 
+# Compile
+
+## Required libraries
+
+### MgsModbus
+
+- Download the archive from http://myarduinoprojects.com/modbus.html
+- Extract the MgsModbus-v0.1.1.zip into libraries folder
+
+### SimpleModbusSlave
+
+- Clone https://github.com/jecrespo/simple-modbus repository
+- Copy *simple-modbus/Modbus RTU libraries for Arduino/SimpleModbusSlaveV10* folder into libraries folder
+
+### DS2438
+
+- Clone https://github.com/jbechter/arduino-onewire-DS2438
+- Move to the libraries folder named
+
+### Other
+
+You can install the following libraries via Manage Libraries feature of Arduino IDE:
+
+- OneWire
 
 # UDP syntax
 ## Signals
