@@ -150,7 +150,7 @@ int inputPins[numOfDigInputs] = {34, 32, 30, 28, 26, 24, 22, 25, 23, 21, 20, 19,
 int dipSwitchPins[numOfDipSwitchPins] = {57, 56, 55, 54, 58, 59};
 
 #else
-# error "Boardtype undefined. You must define one of the BOARD_RAILDUINO_"
+# error "Unknown board type. Please set BOARD_TYPE correctly"
 #endif
 
 
