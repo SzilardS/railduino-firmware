@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019  Ing. Pavel Sedlacek
+    Copyright (C) 2019  Ing. Pavel Sedlacek, Szilard Stange
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
@@ -17,10 +17,12 @@
 //#define dbgln(x) Serial.println(x);
 #define dbgln(x) ;
 
+#define BOARD_RAILDUINO_1_3 1
+#define BOARD_RAILDUINO_2_0 2
+#define BOARD_RAILDUINO_2_1 3
+
 // Define Railduino board version
-// RESERVED FOR FUTURE USE: #define BOARD_RAILDUINO_1_3
-//#define BOARD_RAILDUINO_2_0
-#define BOARD_RAILDUINO_2_1
+#define BOARD_TYPE BOARD_RAILDUINO_2_1
 
 #include <SimpleModbusSlave.h>
 #include <OneWire.h>
@@ -57,31 +59,95 @@ rs485_parameter rs485Parameters[] = {
 #define RS485_MODE_RAILDUINO_9600   3
 #define RS485_MODE_UNUSED           4
 
-#if defined(BOARD_RAILDUINO_1_3)
+#if BOARD_TYPE == BOARD_RAILDUINO_1_3
+
+#warning "Build is configured for Railduino v1.3"
 
 # define BOARD_VERSION 1.3
+
+HardwareSerial rs485SerialPort = Serial1;
 # define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
 # define RS485_MODE_1 RS485_MODE_UNUSED
 
-#elif defined(BOARD_RAILDUINO_2_0)
+#define ONEWIRE_PIN 9
+# define numOfLedPins 1
+int ledPins[numOfLedPins] = {32};
+#define serialTxControl 8
+#define numOfRelays 12
+int relayPins[numOfRelays] = {37, 35, 33, 31, 29, 27, 39, 41, 43, 45, 47, 49};
+#define numOfLSSwitches 0
+#define numOfHSSwitches 0
+#define numOfPwms 4
+int pwmPins[numOfPwms] = {11, 13, 12, 7};
+#define numOfAnaOuts 0
+#define numOfAnaInputs 3
+int analogPins[numOfAnaInputs] = {58, 59, 62};
+#define numOfDigInputs 24
+int inputPins[numOfDigInputs] = {36, 34, 48, 46, 69, 68, 67, 66, 44, 42, 40, 38, 6, 5, 3, 2, 14, 15, 16, 17, 24, 26, 28, 30};
+#define numOfDipSwitchPins 4
+int dipSwitchPins[numOfDipSwitchPins] = {54, 55, 56, 57};
+
+
+#elif BOARD_TYPE == BOARD_RAILDUINO_2_0
+
+#warning "Build is configured for Railduino v2.0"
 
 # define BOARD_VERSION 2.0
-# define numOfLSSwitches 4
-int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 13};
-# define numOfLedPins 2
-int ledPins[numOfLedPins] = {18, 17};
+
+HardwareSerial rs485SerialPort = Serial3;
 # define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
 # define RS485_MODE_1 RS485_MODE_RAILDUINO_19200
 
-#elif defined(BOARD_RAILDUINO_2_1)
+#define ONEWIRE_PIN 62
+# define numOfLedPins 2
+int ledPins[numOfLedPins] = {18, 17};
+#define serialTxControl 16
+#define numOfRelays 12
+int relayPins[numOfRelays] = {39, 41, 43, 45, 47, 49, 23, 25, 27, 29, 31, 33};
+# define numOfLSSwitches 4
+int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 13};
+#define numOfHSSwitches 4
+int HSSwitchPins[numOfHSSwitches] = {5, 6, 7, 8};
+#define numOfPwms 0
+#define numOfAnaOuts 2
+int anaOutPins[numOfAnaOuts] = {3, 2};
+#define numOfAnaInputs 2
+int analogPins[numOfAnaInputs] = {64, 63};
+#define numOfDigInputs 24
+int inputPins[numOfDigInputs] = {34, 32, 30, 28, 26, 24, 22, 25, 23, 21, 20, 19, 36, 38, 40, 42, 44, 46, 48, 69, 68, 67, 66, 65};
+#define numOfDipSwitchPins 6
+int dipSwitchPins[numOfDipSwitchPins] = {57, 56, 55, 54, 58, 59};
+
+
+#elif BOARD_TYPE == BOARD_RAILDUINO_2_1
+
+#warning "Build is configured for Railduino v2.1"
 
 #define BOARD_VERSION 2.1
-# define numOfLSSwitches 4
-int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 18};
-# define numOfLedPins 2
-int ledPins[numOfLedPins] = {13, 17};
+
+HardwareSerial rs485SerialPort = Serial3;
 # define RS485_MODE_0 RS485_MODE_RAILDUINO_115200
 # define RS485_MODE_1 RS485_MODE_MODBUS_RTU
+
+#define ONEWIRE_PIN 62
+# define numOfLedPins 2
+int ledPins[numOfLedPins] = {13, 17};
+#define serialTxControl 16
+#define numOfRelays 12
+int relayPins[numOfRelays] = {37, 35, 33, 31, 29, 27, 39, 41, 43, 45, 47, 49};
+# define numOfLSSwitches 4
+int LSSwitchPins[numOfLSSwitches] = {9, 11, 12, 18};
+#define numOfHSSwitches 4
+int HSSwitchPins[numOfHSSwitches] = {5, 6, 7, 8};
+#define numOfPwms 0
+#define numOfAnaOuts 2
+int anaOutPins[numOfAnaOuts] = {3, 2};
+#define numOfAnaInputs 2
+int analogPins[numOfAnaInputs] = {64, 63};
+#define numOfDigInputs 24
+int inputPins[numOfDigInputs] = {34, 32, 30, 28, 26, 24, 22, 25, 23, 21, 20, 19, 36, 38, 40, 42, 44, 46, 48, 69, 68, 67, 66, 65};
+#define numOfDipSwitchPins 6
+int dipSwitchPins[numOfDipSwitchPins] = {57, 56, 55, 54, 58, 59};
 
 #else
 # error "Boardtype undefined. You must define one of the BOARD_RAILDUINO_"
@@ -121,23 +187,11 @@ EthernetUDP udpSend;
 #define commLedTimeOn 50
 #define commLedTimeOff 50
 #define debouncingTime 5
-#define serial3TxControl 16
-#define numOfRelays 12
-int relayPins[numOfRelays] = {37, 35, 33, 31, 29, 27, 39, 41, 43, 45, 47, 49};
-#define numOfHSSwitches 4
-int HSSwitchPins[numOfHSSwitches] = {5, 6, 7, 8};
-#define numOfAnaOuts 2
-int anaOutPins[numOfAnaOuts] = {3, 2};
-#define numOfAnaInputs 2
-int analogPins[numOfAnaInputs] = {64, 63};
+
 float analogStatus[numOfAnaInputs];
-#define numOfDigInputs 24
-int inputPins[numOfDigInputs] = {34, 32, 30, 28, 26, 24, 22, 25, 23, 21, 20, 19, 36, 38, 40, 42, 44, 46, 48, 69, 68, 67, 66, 65};
 int inputStatus[numOfDigInputs];
 int inputStatusNew[numOfDigInputs];
 int inputChangeTimestamp[numOfDigInputs];
-#define numOfDipSwitchPins 6
-int dipSwitchPins[numOfDipSwitchPins] = {57, 56, 55, 54, 58, 59};
 int boardAddress = 0;
 int ethOn = 0;
 int rs485Mode = -1;
@@ -149,6 +203,7 @@ String railStr = "rail";
 String digInputStr = "di";
 String anaInputStr = "ai";
 String relayStr = "ro";
+String pwmStr = "pwm";
 String HSSwitchStr = "ho";
 String LSSwitchStr = "lo";
 String anaOutStr = "ao";
@@ -164,6 +219,7 @@ String LSSwitchOffCommands[numOfLSSwitches];
 
 String digStatCommand[numOfDigInputs];
 String anaOutCommand[numOfAnaOuts];
+String pwmCommand[numOfPwms];
 
 class Timer {
     private:
@@ -196,7 +252,7 @@ Timer heartBeatTimer;
 
 MgsModbus Mb;
 
-OneWire ds(62);
+OneWire ds(ONEWIRE_PIN);
 byte oneWireData[12];
 byte oneWireAddr[8];
 
@@ -207,17 +263,20 @@ byte sensors2438[maxSensors][8], sensors18B20[maxSensors][8];
 DS2438 ds2438(&ds);
 
 
-
 void setup() {
 
     Serial.begin(9600);
 
 
-    dbg("Railduino firmware version: ");
+    dbg("Railduino board version: ");
     dbgln(BOARD_VERSION);
 
     for (int i = 0; i < numOfDigInputs; i++) {
+#if BOARD_TYPE == BOARD_RAILDUINO_1_3
+        pinMode(inputPins[i], INPUT_PULLUP);
+#else
         pinMode(inputPins[i], INPUT);
+#endif
         inputStatus[i] = 1;
         inputStatusNew[i] = 0;
         digStatCommand[i] = digStatStr + String(i + 1, DEC);
@@ -230,25 +289,43 @@ void setup() {
         setRelay(i, 0);
     }
 
+#if numOfPwms > 0
+    for (int i = 0; i < numOfPwms; i++) {
+        pinMode(pwmPins[i], OUTPUT);
+        pwmCommand[i] = pwmStr + String(i + 1, DEC);
+        setPWM(i, 0);
+    }
+#endif
+
+#if BOARD_TYPE == BOARD_RAILDUINO_1_3
+    pinMode(3, INPUT_PULLUP);
+#endif
+
+#if numOfHSSwitches > 0
     for (int i = 0; i < numOfHSSwitches; i++) {
         pinMode(HSSwitchPins[i], OUTPUT);
         HSSwitchOnCommands[i] = HSSwitchStr + String(i + 1, DEC) + " on";
         HSSwitchOffCommands[i] = HSSwitchStr + String(i + 1, DEC) + " off";
         setHSSwitch(i, 0);
     }
+#endif
 
+#if numOfLSSwitches > 0
     for (int i = 0; i < numOfLSSwitches; i++) {
         pinMode(LSSwitchPins[i], OUTPUT);
         LSSwitchOnCommands[i] = LSSwitchStr + String(i + 1, DEC) + " on";
         LSSwitchOffCommands[i] = LSSwitchStr + String(i + 1, DEC) + " off";
         setLSSwitch(i, 0);
     }
+#endif
 
+#if numOfAnaOuts > 0
     for (int i = 0; i < numOfAnaOuts; i++) {
         pinMode(anaOutPins[i], OUTPUT);
         anaOutCommand[i] = anaOutStr + String(i + 1, DEC);
         setAnaOut(i, 0);
     }
+#endif
 
     for (int i = 0; i < numOfAnaInputs; i++) {
         pinMode(analogPins[i], INPUT);
@@ -270,6 +347,7 @@ void setup() {
         }
     }
 
+#if BOARD_TYPE != BOARD_RAILDUINO_1_3
     pinMode(dipSwitchPins[4], INPUT);
     if (!digitalRead(dipSwitchPins[4]))  {
         ethOn = 1;
@@ -285,6 +363,11 @@ void setup() {
     } else {
         rs485Mode = RS485_MODE_1;
     }
+#else
+        ethOn = 1;
+        rs485Mode = RS485_MODE_0;
+#endif
+
     dbgln(rs485Parameters[rs485Mode].modeStr);
 
     dbg(rs485Parameters[rs485Mode].baudRate);
@@ -318,13 +401,13 @@ void setup() {
     memset(Mb.MbData, 0, sizeof(Mb.MbData));
 
     if (rs485Mode == RS485_MODE_MODBUS_RTU) {
-        modbus_configure(&Serial3, rs485Parameters[rs485Mode].baudRate, SERIAL_8N1, boardAddress, serial3TxControl, sizeof(Mb.MbData), Mb.MbData);
+        modbus_configure(&rs485SerialPort, rs485Parameters[rs485Mode].baudRate, SERIAL_8N1, boardAddress, serialTxControl, sizeof(Mb.MbData), Mb.MbData);
     }
 
-    Serial3.begin(rs485Parameters[rs485Mode].baudRate);
-    Serial3.setTimeout(rs485Parameters[rs485Mode].timeOut);
-    pinMode(serial3TxControl, OUTPUT);
-    digitalWrite(serial3TxControl, 0);
+    rs485SerialPort.begin(rs485Parameters[rs485Mode].baudRate);
+    rs485SerialPort.setTimeout(rs485Parameters[rs485Mode].timeOut);
+    pinMode(serialTxControl, OUTPUT);
+    digitalWrite(serialTxControl, 0);
 
     dbg("Address: ");
     dbgln(boardAddressStr);
@@ -616,10 +699,10 @@ void sendMsg(String message) {
     }
 
     if (rs485Mode != RS485_MODE_MODBUS_RTU) {
-        digitalWrite(serial3TxControl, HIGH);
-        Serial3.print(message + "\n");
+        digitalWrite(serialTxControl, HIGH);
+        rs485SerialPort.print(message + "\n");
         delay(rs485Parameters[rs485Mode].txDelay);
-        digitalWrite(serial3TxControl, LOW);
+        digitalWrite(serialTxControl, LOW);
     }
 
     digitalWrite(ledPins[1], LOW);
@@ -636,6 +719,17 @@ void setRelay(int relay, int value) {
     digitalWrite(relayPins[relay], value);
 }
 
+#if numOfPwms > 0
+void setPWM(int pwm, int value) {
+    if (pwm >= numOfPwms) {
+        return;
+    }
+    dbg("Writing to PWM output " + String(pwm+1) + " value " + String(value));
+    analogWrite(pwmPins[pwm], value);
+}
+#endif
+
+#if numOfHSSwitches > 0
 void setHSSwitch(int hsswitch, int value) {
     if (hsswitch >= numOfHSSwitches) {
         return;
@@ -643,7 +737,9 @@ void setHSSwitch(int hsswitch, int value) {
     dbgln("Writing to high side switch" + String(hsswitch + 1) + " value " + String(value));
     digitalWrite(HSSwitchPins[hsswitch], value);
 }
+#endif
 
+#if numOfLSSwitches > 0
 void setLSSwitch(int lsswitch, int value) {
     if (lsswitch >= numOfLSSwitches) {
         return;
@@ -651,7 +747,9 @@ void setLSSwitch(int lsswitch, int value) {
     dbgln("Writing to low side switch" + String(lsswitch + 1) + " value " + String(value));
     digitalWrite(LSSwitchPins[lsswitch], value);
 }
+#endif
 
+#if numOfAnaOuts > 0
 void setAnaOut(int pwm, int value) {
     if (pwm >= numOfAnaOuts) {
         return;
@@ -659,12 +757,13 @@ void setAnaOut(int pwm, int value) {
     dbgln("Writing to analog output " + String(pwm + 1) + " value " + String(value));
     analogWrite(anaOutPins[pwm], value);
 }
+#endif
 
 boolean receivePacket(String *cmd) {
 
     if (rs485Mode != RS485_MODE_MODBUS_RTU) {
-        while (Serial3.available() > 0) {
-            *cmd = Serial3.readStringUntil('\n');
+        while (rs485SerialPort.available() > 0) {
+            *cmd = rs485SerialPort.readStringUntil('\n');
             if (cmd->startsWith(boardAddressRailStr)) {
                 cmd->replace(boardAddressRailStr, "");
                 cmd->trim();
@@ -705,17 +804,23 @@ void processCommands() {
 
     }
 
+#if numOfHSSwitches > 0
     for (int i = 0; i < numOfHSSwitches; i++) {
         setHSSwitch(i, bitRead(Mb.MbData[hssLssByte], i));
     }
+#endif
 
+#if numOfLSSwitches > 0
     for (int i = 0; i < numOfLSSwitches; i++) {
         setLSSwitch(i, bitRead(Mb.MbData[hssLssByte], i + numOfHSSwitches));
     }
+#endif
 
+#if numofAnaOuts > 0
     for (int i = 0; i < numOfAnaOuts; i++) {
         setAnaOut(i, Mb.MbData[anaOut1Byte + i]);
     }
+#endif
 
     if (bitRead(Mb.MbData[serviceByte], 0)) {
         resetFunc();
@@ -724,7 +829,9 @@ void processCommands() {
     if (receivePacket(&cmd)) {
         dbg("Received packet: ")
         dbgln(cmd);
+#if numOfLedPins == 2
         digitalWrite(ledPins[1], HIGH);
+#endif
         if (cmd.startsWith(relayStr)) {
             for (int i = 0; i < numOfRelays; i++) {
                 if (i < 8) {
@@ -740,7 +847,9 @@ void processCommands() {
                     bitWrite(Mb.MbData[byteNo], bitPos, 0);
                 }
             }
-        } else if (cmd.startsWith(HSSwitchStr)) {
+        } else
+#if numOfHSSwitches > 0
+        if (cmd.startsWith(HSSwitchStr)) {
             for (int i = 0; i < numOfHSSwitches; i++) {
                 if (cmd == HSSwitchOnCommands[i]) {
                     bitWrite(Mb.MbData[hssLssByte], i, 1);
@@ -748,7 +857,11 @@ void processCommands() {
                     bitWrite(Mb.MbData[hssLssByte], i, 0);
                 }
             }
-        } else if (cmd.startsWith(LSSwitchStr)) {
+        } else
+#endif
+
+#if numOfLSSwitches > 0
+        if (cmd.startsWith(LSSwitchStr)) {
             for (int i = 0; i < numOfLSSwitches; i++) {
                 if (cmd == LSSwitchOnCommands[i]) {
                     bitWrite(Mb.MbData[hssLssByte], i + numOfHSSwitches, 1);
@@ -756,16 +869,36 @@ void processCommands() {
                     bitWrite(Mb.MbData[hssLssByte], i + numOfHSSwitches, 0);
                 }
             }
-        } else if (cmd.startsWith(anaOutStr)) {
+        } else
+#endif
+
+#if numOfPwms > 0
+        if (cmd.startsWith(pwmStr)) {
+            String pwmvalue = cmd.substring(pwmStr.length() + 2);
+            for (int i = 0; i < numOfPwms; i++) {
+                if (cmd.substring(0,pwmStr.length() + 1) == pwmCommand[i]) {
+                    setPWM(i, pwmvalue.toInt());
+                }
+            }
+        } else
+#endif
+
+#if numOfAnaOuts > 0
+        if (cmd.startsWith(anaOutStr)) {
             String anaOutValue = cmd.substring(anaOutStr.length() + 2);
             for (int i = 0; i < numOfAnaOuts; i++) {
                 if (cmd.substring(0, anaOutStr.length() + 1) == anaOutCommand[i]) {
                     Mb.MbData[anaOut1Byte + i] = anaOutValue.toInt();
                 }
             }
-        } else if (cmd.startsWith(rstStr)) {
+        } else
+#endif
+
+        if (cmd.startsWith(rstStr)) {
             bitWrite(Mb.MbData[serviceByte], 0, 1);
         }
+#if numOfLedPins == 2
         digitalWrite(ledPins[1], LOW);
+#endif
     }
 }

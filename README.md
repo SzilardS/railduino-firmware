@@ -1,6 +1,6 @@
-# Railduino v2.x firmware
+# Firmware for Railduino v1.3-v2.1 boards
 
-New firmware for Railduino v2.0 and v2.1 based on official firmware from Pavel Sedláček
+New firmware for Railduino v1.3, v2.0 and v2.1 based on official firmware from Pavel Sedláček
 
 # Compile
 
@@ -43,11 +43,12 @@ analog input state|rail1 ai1 250
 | :--- | :--- |
 relay on command|rail1 do12 on
 relay off command|rail1 do5 off
-high side switch on command|rail1 ho2 on
-high side switch off command|rail1 ho4 off
-low side switch on command|rail1 lo1 on
-low side switch off command|rail1 lo2 off
-analog output command|rail1 ao1 180
+high side switch on command (Railduino v2.0+)|rail1 ho2 on
+high side switch off command (Railduino v2.0+)|rail1 ho4 off
+low side switch on command (Railduino v2.0+)|rail1 lo1 on
+low side switch off command (Railduino v2.0+)|rail1 lo2 off
+pwm output command (Railduino v1.3)|pwm1 255
+analog output command (Railduino v2.0+)|rail1 ao1 180
 status command|rail1 stat10
 reset command|rail1 rst
 
