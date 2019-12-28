@@ -629,7 +629,7 @@ void sendMsg(String message) {
 }
 
 void setRelay(int relay, int value) {
-    if (relay > numOfRelays) {
+    if (relay >= numOfRelays) {
         return;
     }
     dbgln("Writing to relay " + String(relay + 1) + " value " + String(value));
@@ -637,7 +637,7 @@ void setRelay(int relay, int value) {
 }
 
 void setHSSwitch(int hsswitch, int value) {
-    if (hsswitch > numOfHSSwitches) {
+    if (hsswitch >= numOfHSSwitches) {
         return;
     }
     dbgln("Writing to high side switch" + String(hsswitch + 1) + " value " + String(value));
@@ -645,7 +645,7 @@ void setHSSwitch(int hsswitch, int value) {
 }
 
 void setLSSwitch(int lsswitch, int value) {
-    if (lsswitch > numOfLSSwitches) {
+    if (lsswitch >= numOfLSSwitches) {
         return;
     }
     dbgln("Writing to low side switch" + String(lsswitch + 1) + " value " + String(value));
@@ -653,7 +653,7 @@ void setLSSwitch(int lsswitch, int value) {
 }
 
 void setAnaOut(int pwm, int value) {
-    if (pwm > numOfAnaOuts) {
+    if (pwm >= numOfAnaOuts) {
         return;
     }
     dbgln("Writing to analog output " + String(pwm + 1) + " value " + String(value));
