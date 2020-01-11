@@ -690,8 +690,9 @@ void sendMsg(String message) {
     message = railStr + boardAddressStr + " " + message;
     message.toCharArray(outputPacketBuffer, outputPacketBufferSize);
 
+#if numOfLedPins == 2
     digitalWrite(ledPins[1], HIGH);
-
+#endif
     if (ethOn) {
         udpSend.beginPacket(sendIpAddress, remPort);
         udpSend.write(outputPacketBuffer, message.length());
@@ -705,8 +706,9 @@ void sendMsg(String message) {
         digitalWrite(serialTxControl, LOW);
     }
 
+#if numOfLedPins == 2
     digitalWrite(ledPins[1], LOW);
-
+#endif
     dbg("Sending packet: ");
     dbgln(message);
 }
@@ -832,6 +834,7 @@ void processCommands() {
 #if numOfLedPins == 2
         digitalWrite(ledPins[1], HIGH);
 #endif
+
         if (cmd.startsWith(relayStr)) {
             for (int i = 0; i < numOfRelays; i++) {
                 if (i < 8) {
