@@ -12,10 +12,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-//#define dbg(x) Serial.print(x);
-#define dbg(x) ;
-//#define dbgln(x) Serial.println(x);
-#define dbgln(x) ;
+//#define DEBUG
+
+#ifdef DEBUG
+# define dbg(x) Serial.print(x);
+# define dbgln(x) Serial.println(x);
+#else
+# define dbg(x) ;
+# define dbgln(x) ;
+#endif
 
 #define BOARD_RAILDUINO_1_3 1
 #define BOARD_RAILDUINO_2_0 2
