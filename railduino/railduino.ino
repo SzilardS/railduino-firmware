@@ -74,7 +74,7 @@ HardwareSerial rs485SerialPort = Serial1;
 int ledPins[numOfLedPins] = {32};
 #define serialTxControl 8
 #define numOfRelays 12
-int relayPins[numOfRelays] = {37, 35, 33, 31, 29, 27, 39, 41, 43, 45, 47, 49};
+int relayPins[numOfRelays] = {39, 41, 43, 45, 47, 49, 23, 25, 27, 29, 31, 33};
 #define numOfLSSwitches 0
 #define numOfHSSwitches 0
 #define numOfPwms 4
