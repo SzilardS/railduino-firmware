@@ -796,15 +796,23 @@ void processCommands() {
     String cmd;
     byte byteNo, curBitValue, bitPos;
     int curAnaVal;
+    static byte curOut1Byte = 0, curOut2Byte = 0;
 
     for (int i = 0; i < numOfRelays; i++) {
         if (i < 8) {
-            setRelay(i, bitRead(Mb.MbData[relOut1Byte], i));
+            if(bitRead(Mb.MbData[relOut1Byte], i) != bitRead(curOut1Byte, i))
+            {
+                setRelay(i, bitRead(Mb.MbData[relOut1Byte], i));
+            }
         } else {
-            setRelay(i, bitRead(Mb.MbData[relOut2Byte], i - 8));
+            if(bitRead(Mb.MbData[relOut2Byte], i-8) != bitRead(curOut2Byte, i-8))
+            {
+                setRelay(i, bitRead(Mb.MbData[relOut2Byte], i-8));
+            }
         }
-
     }
+    curOut1Byte = Mb.MbData[relOut1Byte];
+    curOut2Byte = Mb.MbData[relOut2Byte];
 
 #if numOfHSSwitches > 0
     for (int i = 0; i < numOfHSSwitches; i++) {
