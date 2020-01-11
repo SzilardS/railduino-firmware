@@ -41,8 +41,8 @@ analog input state|rail1 ai1 250
 
 | Description | Message from server  |
 | :--- | :--- |
-relay on command|rail1 do12 on
-relay off command|rail1 do5 off
+relay on command|rail1 ro12 on
+relay off command|rail1 ro5 off
 high side switch on command (Railduino v2.0+)|rail1 ho2 on
 high side switch off command (Railduino v2.0+)|rail1 ho4 off
 low side switch on command (Railduino v2.0+)|rail1 lo1 on
