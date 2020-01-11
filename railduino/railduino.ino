@@ -726,7 +726,7 @@ void setPWM(int pwm, int value) {
     if (pwm >= numOfPwms) {
         return;
     }
-    dbg("Writing to PWM output " + String(pwm+1) + " value " + String(value));
+    dbgln("Writing to PWM output " + String(pwm+1) + " value " + String(value));
     analogWrite(pwmPins[pwm], value);
 }
 #endif
